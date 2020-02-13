@@ -1,0 +1,228 @@
+﻿@{
+    ViewData["Title"] = "Employee";
+}
+
+<h2>
+    Employees
+</h2>
+
+<div>
+    <p id="importResult" style="color: green"></p>
+</div>
+
+<div id="grid"></div>
+
+@* Toolbar template for kendo grid *@
+<script type="text/x-kendo-template" id="toolbarTemplate">
+    <a role="button" class="k-button k-button-icontext k-grid-add" href="javascript:;">
+        <span class="k-icon k-i-plus"></span>
+        Add employee
+    </a>
+    <form id="form" enctype="multipart/form-data" method="post" style="display: inline">
+        <label class="k-button" for="importFile">
+            <span class="k-icon k-i-file-add mr-1"></span>
+            Import
+        </label>
+        <input type="file" name="excelUpload" class="invisible" id="importFile" onchange="upload()">
+    </form>
+</script>
+
+@section Scripts {
+    <script>
+
+        // upload function that sends file to action
+        function upload() {
+            var formData = new FormData();
+            formData.append('file', $('#importFile')[0].files[0]);
+            $.ajax({
+                url: "@Url.Action("Import", "Employee")",
+                type: 'POST',
+                data: formData,
+                async: false,
+                cache: false,
+                contentType: false,
+                enctype: 'multipart/form-data',
+                processData: false,
+                success: function (response) {
+                    document.getElementById("importFile").value = "";
+                    document.getElementById("importResult").innerText = response + " rows successfully added!";
+                    $("#grid").data("kendoGrid").dataSource.read();
+                }
+            });
+        }
+
+        $(document).ready(function () {
+
+            // kendo grid
+            $("#grid").kendoGrid({
+                dataSource: {
+                    transport: {
+                        read: {
+                            url: "@Url.Action("GetEmployees", "Employee")",
+                            dataType: "json",
+                            contentType: 'application/json; charset=utf-8',
+                            type: 'GET'
+                        },
+                        create: {
+                            url: "@Url.Action("Create", "Employee")",
+                            contentType: 'application/json; charset=utf-8',
+                            type: 'POST'
+                        },
+                        update: {
+                            url: (item) => "@Url.Action("Update", "Employee")/" + item.id,
+                            contentType: 'application/json; charset=utf-8',
+                            type: 'PUT'
+                        },
+                        destroy: {
+                            url: (item) => "@Url.Action("Delete", "Employee")/" + item.id,
+                            contentType: 'application/json; charset=utf-8',
+                            type: 'DELETE'
+                        },
+                        parameterMap: function (options, operation) {
+                            if (operation === "read") {
+                                return { filters: kendo.stringify(options) };
+                            }
+                            else {
+                                return JSON.stringify(options);
+                            }
+                        }
+                    },
+                    schema: {
+                        data: "data",
+                        total: "total",
+                        model: {
+                            id: "id",
+                            fields: {
+                                id: { editable: false, nullable: true },
+                                payrollNumber: { type: "string", validation: { required: true } },
+                                forenames: { type: "string", validation: { required: true } },
+                                surname: { type: "string", validation: { required: true } },
+                                dateOfBirth: { type: "date", validation: { required: true } },
+                                telephone: { type: "string", validation: { required: true } },
+                                mobile: { type: "string", validation: { required: true } },
+                                address: { type: "string", validation: { required: true } },
+                                address2: { type: "string", validation: { required: true } },
+                                postcode: { type: "string", validation: { required: true } },
+                                eMail: { type: "string", validation: { email: true, required: true } },
+                                startDate: { type: "date", validation: { required: true } },
+                            }
+                        }
+                    },
+                    requestEnd: onRequestEnd,
+                    error: function (e) {
+                        console.log(e);
+                        alert("error");
+                    },
+                    pageSize: 20,
+                    serverPaging: true,
+                    serverFiltering: true,
+                },
+                height: 450,
+                toolbar: kendo.template($("#toolbarTemplate").html()),
+                editable: "popup",
+                filterable: {
+                    mode: "row"
+                },
+                sortable: true,
+                scrollable: true,
+                pageable: {
+                    refresh: true,
+                    pageSizes: true,
+                    buttonCount: 5
+                },
+                columns: [{
+                    field: "payrollNumber",
+                    title: "PayrollNumber",
+                    filterable: {
+                        cell: {
+                            operator: "contains",
+                            showOperators: false,
+                        }
+                    },
+                    width: "150px"
+                }, {
+                    field: "forenames",
+                    title: "Forenames",
+                    filterable: {
+                        cell: {
+                            operator: "contains",
+                            showOperators: false,
+                        }
+                    },
+                    width: "150px"
+                }, {
+                    field: "surname",
+                    title: "Surname",
+                    filterable: {
+                        cell: {
+                            operator: "contains",
+                            showOperators: false,
+                        }
+                    },
+                    width: "150px"
+                }, {
+                    field: "dateOfBirth",
+                    title: "DateOfBirth",
+                    format: "{0:MM/dd/yyyy}",
+                    filterable: {
+                        cell: {
+                            operator: "gte",
+                            showOperators: false,
+                        }
+                    },
+                    width: "150px"
+                }, {
+                    field: "telephone",
+                    title: "Telephone",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "mobile",
+                    title: "Mobile",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "address",
+                    title: "Address",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "address2",
+                    title: "Address2",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "postcode",
+                    title: "Postcode",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "eMail",
+                    title: "EMail",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                    field: "startDate",
+                    title: "StartDate",
+                    format: "{0:MM/dd/yyyy}",
+                    filterable: false,
+                    width: "150px"
+                }, {
+                   command: ["edit", "destroy"],
+                   title: "Actions",
+                   width: "180px"
+                }]
+            });
+
+            // refresh grid after create and update operations
+            function onRequestEnd(e) {
+                if (e.type == "create") {
+                      e.sender.read();
+                }
+                else if (e.type == "update") {
+                      e.sender.read();
+                }
+            }
+        });
+    </script>
+}
